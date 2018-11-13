@@ -143,7 +143,7 @@ VectorXd grad_conj( Matrix<double,Dynamic,Dynamic> A , VectorXd b , VectorXd x ,
 
       int li = atoi(ligne.c_str());
       int col = atoi(colonne.c_str());
-      double val = atoi(valeur.c_str());
+      double val = atof(valeur.c_str());
 
       liste_elem.push_back({li-1,col-1,val});  //stoi pour passer de string à int et stod idem avec double
       if ((colonne != ligne) && sym) // dans le cas de cette matrice symétrique seulement la moitié des éléments sont référencés dans le fichier texte
