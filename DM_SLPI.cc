@@ -8,6 +8,10 @@
 #include <sstream>
 #include <chrono>
 #include<complex>
+#include <cstdlib>
+#include <ctime>
+#include <random>
+
 #include "Dense"
 #include "Sparse"
 
@@ -29,15 +33,21 @@ x2.setZero();
 In.setIdentity();
 
 //création de Bn
+const int min=0;
+const int max=2;
 for (int i =0 ; i<n ; i++)
   {
     for (int j =0 ; j<n ; j++)
-      {float nombre = 0;
-      srand(time(NULL));                             //fonction aléatoire basé sur le temps donc tous les coeffs de B sont égaux.
-      nombre = (float)rand() / (float)RAND_MAX;      //Demander ou trouver mieux sur internet
-      Bn.coeffRef(i,j) = nombre;}
+      {
+
+      double nb_alea = min + (rand()%(max-min));
+      Bn.coeffRef(i,j) = nb_alea;
+
+
+
+    }
   }
-  //cout <<Bn<<endl;
+//  cout <<"Bn"<<Bn<<endl;
 
 //Création de An
 BnTBn = Bn.transpose()*Bn;
@@ -76,15 +86,15 @@ cout <<"Vérification en calculant An.x = "<<endl<< An*x<<endl;
 // cout <<"    "<<endl;
 SparseVector<double> x0;
 x0.resize(x.size());
-for( int i = 0 ; i < x.size() ; ++i)
-  {x0.coeffRef(i) = 0.;}
-
-x1 = res_min( An , b ,  x1 , x0 , 0.01 , 2000 );   //ne fonctionne pas si l'on met autre chose que 0 dans x0
-cout <<"  "<<endl;                                // d'après doc internet si x0 est trop éloigné de x les résultats ne converge plus
-cout <<"x avec res_min = "<<endl << x1 <<endl;
-cout <<"    "<<endl;
-cout << "A*x = "<<endl<<An*x1<<endl;
-cout <<"    "<<endl;
+// for( int i = 0 ; i < x.size() ; ++i)
+//   {x0.coeffRef(i) = 0.;}
+//
+// x1 = res_min( An , b ,  x1 , x0 , 0.01 , 2000 );   //ne fonctionne pas si l'on met autre chose que 0 dans x0
+// cout <<"  "<<endl;                                // d'après doc internet si x0 est trop éloigné de x les résultats ne converge plus
+// cout <<"x avec res_min = "<<endl << x1 <<endl;
+// cout <<"    "<<endl;
+// cout << "A*x = "<<endl<<An*x1<<endl;
+// cout <<"    "<<endl;
 
 
 

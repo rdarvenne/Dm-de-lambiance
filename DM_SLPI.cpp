@@ -13,9 +13,10 @@ using namespace Eigen;
 
 SparseVector<double> SGS( SparseMatrix<double> A , SparseVector<double> b , SparseVector<double> x , double eps , int n_ite_max )
 {
-  double s1(0.) , s2(0.) ;
+  double s1(0.) ;
   int n = b.size();
-  SparseVector<double> y(b.size()) , diffxy(b.size()) ;
+  SparseVector<double> y(n) , diffxy(n) , r(n);
+  
   for( int i = 0 ; i<x.size() ; i++)
       {
         y.coeffRef(i) = x.coeffRef(i);
@@ -27,7 +28,15 @@ SparseVector<double> SGS( SparseMatrix<double> A , SparseVector<double> b , Spar
   mon_flux.open(name_file, ios::out);
 
   int n_ite(0.);
-  while(diffxy.norm() > eps && n_ite < n_ite_max)
+  r = b- A*x;
+
+  if(mon_flux)
+      {
+        mon_flux<<n_ite<<" "<<r.norm()<<endl;
+      }
+
+
+  while(r.norm() > eps && n_ite < n_ite_max)
     {
         for( int i = 0 ; i<x.size() ; ++i)
           {x.coeffRef(i) = y.coeffRef(i);}
@@ -46,16 +55,20 @@ SparseVector<double> SGS( SparseMatrix<double> A , SparseVector<double> b , Spar
 
            n_ite = n_ite + 1 ;
            cout <<n_ite<<endl;
+
            for( int i = 0 ; i<x.size() ; ++i)
            {diffxy.coeffRef(i) = x.coeffRef(i) - y.coeffRef(i);}
+
+           r = b - A*y;
+
            if(mon_flux)
             {
-              mon_flux<<n_ite<<" "<<diffxy.norm()<<endl;
+              mon_flux<<n_ite<<" "<<r.norm()<<endl;
             }
 
 
     }
-    if(n_ite > n_ite_max)
+    if(n_ite >= n_ite_max)
       {cout << "Tolérance non atteinte"<<endl;}
      cout << "SGS a cv en " << n_ite<< " itérations"<< endl;
 
