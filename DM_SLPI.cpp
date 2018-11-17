@@ -15,15 +15,19 @@ using namespace Eigen;
 SparseVector<double> SGS( SparseMatrix<double> A , SparseVector<double> b , SparseVector<double> x , double eps , int n_ite_max )
 {
   double s1(0.) , s2(0.) ;
-  SparseVector<double> y(b.size()) , diffxy(b.size());
+  int n = b.size();
+  SparseVector<double> y(b.size()) , diffxy(b.size()) ;
   for( int i = 0 ; i<x.size() ; i++)
       {
         y.coeffRef(i) = x.coeffRef(i);
         x.coeffRef(i) = y.coeffRef(i) + 2*eps;
         diffxy.coeffRef(i) = x.coeffRef(i) - y.coeffRef(i);
       }
-  int n_ite(0.);
+  std::ofstream mon_flux; // Contruit un objet "ofstream"
+  std::string name_file = ("sol_N"+to_string(n)+"_SGS.txt");  //commande pour modifier le nom de chaque fichier
+  mon_flux.open(name_file, ios::out);
 
+  int n_ite(0.);
   while(diffxy.norm() > eps && n_ite < n_ite_max)
     {
         for( int i = 0 ; i<x.size() ; ++i)
@@ -42,9 +46,15 @@ SparseVector<double> SGS( SparseMatrix<double> A , SparseVector<double> b , Spar
            }
 
            n_ite = n_ite + 1 ;
-
+           cout <<n_ite<<endl;
            for( int i = 0 ; i<x.size() ; ++i)
            {diffxy.coeffRef(i) = x.coeffRef(i) - y.coeffRef(i);}
+           if(mon_flux)
+            {
+              mon_flux<<n_ite<<" "<<diffxy.norm()<<endl;
+            }
+
+
     }
     if(n_ite > n_ite_max)
       {cout << "Tolérance non atteinte"<<endl;}
@@ -52,7 +62,6 @@ SparseVector<double> SGS( SparseMatrix<double> A , SparseVector<double> b , Spar
 
     return x;
 }
-
 
 SparseVector<double> res_min( SparseMatrix<double> A , SparseVector<double> b , SparseVector<double> x , SparseVector<double> x0, double eps , int n_ite_max )
 {
