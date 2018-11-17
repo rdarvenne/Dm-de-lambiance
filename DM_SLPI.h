@@ -13,7 +13,7 @@ using namespace Eigen;
 
 VectorXd SGS( Matrix<double,Dynamic,Dynamic> A , VectorXd b , VectorXd x , double eps , int n_ite_max );
 
-VectorXd res_min( Matrix<double,Dynamic,Dynamic> A , VectorXd b , VectorXd x , VectorXd x0, double eps , int n_ite_max );
+SparseVector<double> res_min( SparseMatrix<double> A , SparseVector<double> b , SparseVector<double> x , SparseVector<double> x0, double eps , int n_ite_max );
 
 VectorXd grad_conj( Matrix<double,Dynamic,Dynamic> A , VectorXd b , VectorXd x , VectorXd x0, double eps , int n_ite_max );
 

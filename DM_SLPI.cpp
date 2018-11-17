@@ -56,18 +56,19 @@ VectorXd SGS( Matrix<double,Dynamic,Dynamic> A , VectorXd b , VectorXd x , doubl
 }
 
 
-VectorXd res_min( Matrix<double,Dynamic,Dynamic> A , VectorXd b , VectorXd x , VectorXd x0, double eps , int n_ite_max )
+SparseVector<double> res_min( SparseMatrix<double> A , SparseVector<double> b , SparseVector<double> x , SparseVector<double> x0, double eps , int n_ite_max )
 {
-  VectorXd r , z ;
-  r.resize(b.size());
-  double alpha(0.);
+//  SparseVector<double> r,z;
 
-  r = b - A*x0;
+  //r.resize(b.size());
+  double alpha(0.);
+  SparseVector<double> r(b - A*x0);
+  //r = b - A*x0;
   int n_ite(0.);
 
-  while(r.lpNorm<Infinity>() > eps && n_ite < n_ite_max)
+  while(r.norm() > eps && n_ite < n_ite_max)
   {
-    z = A*r;
+    SparseVector<double> z(A*r);
     alpha = r.dot(z)/z.dot(z);
     x = x + alpha*r;
     r = r - alpha*z;
@@ -124,7 +125,7 @@ VectorXd grad_conj( Matrix<double,Dynamic,Dynamic> A , VectorXd b , VectorXd x ,
     ifstream mon_flux(name_file_read);
 
     string ligne, colonne, valeur;
-    getline(mon_flux,ligne); //lit la première ligne qui ne nous intéresse pas 
+    getline(mon_flux,ligne); //lit la première ligne qui ne nous intéresse pas
 
     mon_flux >> N; //lit le premier mot de la ligne 2 correspond au nombre de lignes
 
