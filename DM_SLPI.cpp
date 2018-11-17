@@ -79,48 +79,51 @@ SparseVector<double> res_min( SparseMatrix<double> A , SparseVector<double> b , 
   return x;
 }
 
+
 SparseVector<double> grad_conj( SparseMatrix<double> A , SparseVector<double> b , SparseVector<double> x , SparseVector<double> x0, double eps , int n_ite_max )
   {
-    SparseVector<double> p0 ,pold , r0 , pnew  , rold ,rnew ,xnew ,xold, z;
+    SparseVector<double> p0 ,pold  , pnew  , rold ,rnew ,xnew ,xold , r;
     int n_ite ;
     double alpha , beta ;
 
     p0.resize(x.size());
-    r0.resize(x.size());
     pnew.resize(x.size());
     rold.resize(x.size());
     rold.resize(x.size());
     rnew.resize(x.size());
     xold.resize(x.size());
     xnew.resize(x.size());
-    z.resize(x.size());
-  
-    r0 = A*x0 - b;
-    p0 = -r0 ;
+    r.resize(x.size());
+
+    r = A*x0 - b;
+    p0 = -r ;
     pold = p0 ;
-    rold = r0 ;
-    rnew = r0;
+    rold = r ;
+    rnew = r;
     n_ite = 0;
 
-    while (rnew.norm() > eps && n_ite <= n_ite_max)
+    while (r.norm() > eps && n_ite <= n_ite_max)
      {
-       z    = A*pold;
-       alpha   =  -pold.dot(rold)/(z).dot(pold) ;
+
+       alpha   =  -pold.dot(rold)/(A*pold).dot(pold) ;
        xnew = xold + alpha*pold ;
-       rnew = rold + alpha * z;
+       rnew = rold + alpha * A*pold;
        beta = rnew.dot(rnew)/rold.dot(rold);
        pnew = -rnew + beta*pold;
        xold = xnew;
        rold = rnew;
        pold = pnew;
+       r = b - A*xnew;
        n_ite++;
      }
      cout << "le gradien conjugué a cv en " << n_ite<< " itérations"<< endl;
       if(n_ite > n_ite_max)
         {cout << "Tolérance non atteinte"<<endl;}
-    //   cout <<"n_ite = "<<n_ite<<endl;
+    // cout <<"n_ite = "<<n_ite<<endl;
       return xnew;
-  }
+}
+
+
 
 
  SparseMatrix<double> create_mat(const string name_file_read, bool sym)
