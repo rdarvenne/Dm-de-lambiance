@@ -11,7 +11,6 @@
 using namespace std;
 using namespace Eigen;
 
-
 SparseVector<double> SGS( SparseMatrix<double> A , SparseVector<double> b , SparseVector<double> x , double eps , int n_ite_max )
 {
   double s1(0.) , s2(0.) ;
@@ -63,16 +62,24 @@ SparseVector<double> SGS( SparseMatrix<double> A , SparseVector<double> b , Spar
     return x;
 }
 
+
 SparseVector<double> res_min( SparseMatrix<double> A , SparseVector<double> b , SparseVector<double> x , SparseVector<double> x0, double eps , int n_ite_max )
 {
 //  SparseVector<double> r,z;
 
   //r.resize(b.size());
-  double alpha(0.);
+  double alpha(3.);
+  int n = b.size();
   SparseVector<double> r(b - A*x0);
   //r = b - A*x0;
   int n_ite(0.);
-
+  std::ofstream mon_flux; // Contruit un objet "ofstream"
+  std::string name_file = ("sol_N"+to_string(n)+"_resmin.txt");  //commande pour modifier le nom de chaque fichier
+  mon_flux.open(name_file, ios::out);
+  if(mon_flux)
+         {
+           mon_flux<<n_ite<<" "<<r.norm()<<endl;
+         }
   while(r.norm() > eps && n_ite < n_ite_max)
   {
     SparseVector<double> z(A*r);
@@ -80,31 +87,35 @@ SparseVector<double> res_min( SparseMatrix<double> A , SparseVector<double> b , 
     x = x + alpha*r;
     r = r - alpha*z;
     n_ite++;
+    if(mon_flux)
+         {
+           mon_flux<<n_ite<<" "<<r.norm()<<endl;
+         }
   }
-   if(n_ite > n_ite_max)
-      {cout << "Tolérance non atteinte"<<endl;}
-     cout << "Le résidu minimum a cv en " << n_ite<< " itérations"<< endl;
-  
+   if(n_ite >= n_ite_max)
+        {cout << "Tolérance non atteinte"<<endl;}
+   cout << "le résidu minimum a cv en " << n_ite<< " itérations"<< endl;
+   mon_flux.close();
   return x;
 }
 
 
 SparseVector<double> grad_conj( SparseMatrix<double> A , SparseVector<double> b , SparseVector<double> x , SparseVector<double> x0, double eps , int n_ite_max )
   {
-    SparseVector<double> p0 ,pold  , pnew  , rold ,rnew ,xnew ,xold , r, z;
-    int n_ite ;
+    SparseVector<double> p0 ,pold  , pnew  , rold ,rnew ,xnew ,xold , r , z;
+    int n_ite , n ;
     double alpha , beta ;
+    n = x.size();
+    p0.resize(n);
+    pnew.resize(n);
+    rold.resize(n);
+    rold.resize(n);
+    rnew.resize(n);
+    xold.resize(n);
+    xnew.resize(n);
+    r.resize(n);
+    z.resize(n);
 
-    p0.resize(x.size());
-    pnew.resize(x.size());
-    rold.resize(x.size());
-    rold.resize(x.size());
-    rnew.resize(x.size());
-    xold.resize(x.size());
-    xnew.resize(x.size());
-    r.resize(x.size());
-    z.resize(x.size());
-  
     r = A*x0 - b;
     p0 = -r ;
     pold = p0 ;
@@ -112,9 +123,17 @@ SparseVector<double> grad_conj( SparseMatrix<double> A , SparseVector<double> b 
     rnew = r;
     n_ite = 0;
 
+    std::ofstream mon_flux; // Contruit un objet "ofstream"
+    std::string name_file = ("sol_N"+to_string(n)+"_gradconj.txt");  //commande pour modifier le nom de chaque fichier
+    mon_flux.open(name_file, ios::out);
+    if(mon_flux)
+         {
+           mon_flux<<n_ite<<" "<<r.norm()<<endl;
+         }
+
     while (r.norm() > eps && n_ite <= n_ite_max)
      {
-       z    = A*pold;
+       z = A*pold;
        alpha   =  -pold.dot(rold)/(z).dot(pold) ;
        xnew = xold + alpha*pold ;
        rnew = rold + alpha * z;
@@ -125,15 +144,18 @@ SparseVector<double> grad_conj( SparseMatrix<double> A , SparseVector<double> b 
        pold = pnew;
        r = b - A*xnew;
        n_ite++;
+       if(mon_flux)
+         {
+           mon_flux<<n_ite<<" "<<r.norm()<<endl;
+         }
      }
      cout << "le gradien conjugué a cv en " << n_ite<< " itérations"<< endl;
-      if(n_ite > n_ite_max)
+      if(n_ite >= n_ite_max)
         {cout << "Tolérance non atteinte"<<endl;}
     // cout <<"n_ite = "<<n_ite<<endl;
+      mon_flux.close();
       return xnew;
 }
-
-
 
 
  SparseMatrix<double> create_mat(const string name_file_read, bool sym)
@@ -174,4 +196,18 @@ SparseVector<double> grad_conj( SparseMatrix<double> A , SparseVector<double> b 
     mon_flux.close();
 
     return A;
+}
+
+// Écrit un fichier avec la solution au format Paraview
+void saveSolution(int it , int n_iter , double residu)
+{
+  std::ofstream mon_flux; // Contruit un objet "ofstream"
+  std::string name_file = ("/sol_"+std::to_string(it)+"_gradconj.txt");  //commande pour modifier le nom de chaque fichier
+  mon_flux.open(name_file, std::ios::out);
+
+  if(mon_flux)
+  {
+      mon_flux<<n_iter<<residu<<endl;
+  }
+  mon_flux.close();
 }
