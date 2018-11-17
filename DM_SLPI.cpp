@@ -77,9 +77,9 @@ SparseVector<double> res_min( SparseMatrix<double> A , SparseVector<double> b , 
   return x;
 }
 
-VectorXd grad_conj( Matrix<double,Dynamic,Dynamic> A , VectorXd b , VectorXd x , VectorXd x0, double eps , int n_ite_max )
+SparseVector<double> grad_conj( SparseMatrix<double> A , SparseVector<double> b , SparseVector<double> x , SparseVector<double> x0, double eps , int n_ite_max )
   {
-    VectorXd p0 ,pold , r0 , pnew  , rold ,rnew ,xnew ,xold;
+    SparseVector<double> p0 ,pold , r0 , pnew  , rold ,rnew ,xnew ,xold;
     int n_ite ;
     double alpha , beta ;
 
@@ -111,6 +111,7 @@ VectorXd grad_conj( Matrix<double,Dynamic,Dynamic> A , VectorXd b , VectorXd x ,
        pold = pnew;
        n_ite++;
      }
+     cout << "le gradien conjugué a cv en " << n_ite<< " itérations"<< endl;
       if(n_ite > n_ite_max)
         {cout << "Tolérance non atteinte"<<endl;}
     //   cout <<"n_ite = "<<n_ite<<endl;

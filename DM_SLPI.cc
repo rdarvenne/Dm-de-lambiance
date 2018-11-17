@@ -17,7 +17,7 @@ using namespace Eigen;
 int main()
 {
 //création d'une matrice de la forme souhaitée
-int const n(3.);                                          //taille de la matrice
+int const n(10.);                                          //taille de la matrice
 double alpha(2.);
 SparseMatrix<double> In(n,n) , Bn(n,n) , An(n,n), BnTBn(n,n);
 
@@ -81,16 +81,16 @@ cout <<"    "<<endl;
 
 
 // //GRADIENT CONJUGUE//////////////////////////////////////////////////////////////////////////////
-// cout<<"---------------------------------------"<<endl;
-// cout<<"Avec le gradient conjugué"<<endl;
-// cout <<"    "<<endl;
-//
-//
-// x2 = grad_conj( An , b , x ,  x0,  0.1 , 200 );  //ne fonctionne pas si l'on met autre chose que 0 dans x0
-// cout <<"  "<<endl;
-// cout <<"x avec grad_conj = "<<endl << x2 <<endl;
-// cout <<"    "<<endl;
-// cout << "Vérification en calculant An*x = "<< endl << An*x2 <<endl;
+cout<<"---------------------------------------"<<endl;
+cout<<"Avec le gradient conjugué"<<endl;
+cout <<"    "<<endl;
+
+
+x2 = grad_conj( An , b , x ,  x0,  0.1 , 200 );  //ne fonctionne pas si l'on met autre chose que 0 dans x0
+cout <<"  "<<endl;
+cout <<"x avec grad_conj = "<<endl << x2 <<endl;
+cout <<"    "<<endl;
+cout << "Vérification en calculant An*x = "<< endl << An*x2 <<endl;
 
 
 
