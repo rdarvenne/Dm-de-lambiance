@@ -17,12 +17,14 @@ using namespace Eigen;
 int main()
 {
 //création d'une matrice de la forme souhaitée
-int const n(10.);                                          //taille de la matrice
+int const n(100.);                                          //taille de la matrice
 double alpha(2.);
 SparseMatrix<double> In(n,n) , Bn(n,n) , An(n,n), BnTBn(n,n);
-
-
 SparseVector<double> b(n) ,x(n) ,x1(n) ,x2(n);
+
+x.setZero();
+x1.setZero();
+x2.setZero();
 
 In.setIdentity();
 
@@ -35,7 +37,7 @@ for (int i =0 ; i<n ; i++)
       nombre = (float)rand() / (float)RAND_MAX;      //Demander ou trouver mieux sur internet
       Bn.coeffRef(i,j) = nombre;}
   }
-  cout <<Bn<<endl;
+  //cout <<Bn<<endl;
 
 //Création de An
 BnTBn = Bn.transpose()*Bn;
@@ -47,7 +49,7 @@ for (int i =0 ; i<n ; i++)
 
 }
 }
- cout <<"An = "<<endl<< An <<endl;
+ //cout <<"An = "<<endl<< An <<endl;
 
  //création de b
  for (int i =0 ; i<n ;i++)
@@ -56,42 +58,48 @@ cout <<"    "<<endl;
 cout <<"b = "<<endl<< b <<endl;
 cout <<"    "<<endl;
 
-x = SGS( An , b ,  x , 0.01 , 200 );
+//RESOLUTION
+
+//SGS/////////////////////////////////////////////////////////////////////////////////////////////
+cout <<"  "<<endl;
+cout<<"Avec Gauss Seidel symétrique"<<endl;
+cout <<"  "<<endl;
+x = SGS( An , b ,  x , 0.01 , 20000 );
 cout <<"x avec SGS = "<<endl << x <<endl;
 cout <<"    "<<endl;
 cout <<"Vérification en calculant An.x = "<<endl<< An*x<<endl;
 
- cout<<"---------------------------------------"<<endl;
- cout<<"Avec res min"<<endl;
- cout <<"    "<<endl;
-  
-  
+//RESIDU MINIMUM//////////////////////////////////////////////////////////////////////////////////////////
+
+// cout<<"---------------------------------------"<<endl;
+// cout<<"Avec res min"<<endl;
+// cout <<"    "<<endl;
 SparseVector<double> x0;
 x0.resize(x.size());
 for( int i = 0 ; i < x.size() ; ++i)
   {x0.coeffRef(i) = 0.;}
 
-x1 = res_min( An , b ,  x1 , x0 , 0.001 , 200 );   //ne fonctionne pas si l'on met autre chose que 0 dans x0
+x1 = res_min( An , b ,  x1 , x0 , 0.01 , 2000 );   //ne fonctionne pas si l'on met autre chose que 0 dans x0
 cout <<"  "<<endl;                                // d'après doc internet si x0 est trop éloigné de x les résultats ne converge plus
 cout <<"x avec res_min = "<<endl << x1 <<endl;
 cout <<"    "<<endl;
 cout << "A*x = "<<endl<<An*x1<<endl;
 cout <<"    "<<endl;
-//  cout<< An - Bn <<endl;
+
 
 
 
 // //GRADIENT CONJUGUE//////////////////////////////////////////////////////////////////////////////
-cout<<"---------------------------------------"<<endl;
-cout<<"Avec le gradient conjugué"<<endl;
-cout <<"    "<<endl;
-
-
-x2 = grad_conj( An , b , x ,  x0,  0.1 , 200 );  //ne fonctionne pas si l'on met autre chose que 0 dans x0
-cout <<"  "<<endl;
-cout <<"x avec grad_conj = "<<endl << x2 <<endl;
-cout <<"    "<<endl;
-cout << "Vérification en calculant An*x = "<< endl << An*x2 <<endl;
+// cout<<"---------------------------------------"<<endl;
+// cout<<"Avec le gradient conjugué"<<endl;
+// cout <<"    "<<endl;
+//
+//
+// x2 = grad_conj( An , b , x ,  x0,  0.1 , 2000 );  //ne fonctionne pas si l'on met autre chose que 0 dans x0
+// cout <<"  "<<endl;
+// cout <<"x avec grad_conj = "<<endl << x2 <<endl;
+// cout <<"    "<<endl;
+// cout << "Vérification en calculant An*x = "<< endl << An*x2 <<endl;
 
 
 
