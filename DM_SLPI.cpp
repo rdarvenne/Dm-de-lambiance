@@ -12,46 +12,44 @@ using namespace std;
 using namespace Eigen;
 
 
-VectorXd SGS( Matrix<double,Dynamic,Dynamic> A , VectorXd b , VectorXd x , double eps , int n_ite_max )
+SparseVector<double> SGS( SparseMatrix<double> A , SparseVector<double> b , SparseVector<double> x , double eps , int n_ite_max )
 {
-  VectorXd y;
-  VectorXd diffxy;
   double s1(0.) , s2(0.) ;
-  y.resize(x.size());
-  diffxy.resize(x.size());
-
+  SparseVector<double> y(b.size()) , diffxy(b.size());
   for( int i = 0 ; i<x.size() ; i++)
       {
-        y[i] = x[i];
-        x[i] = y[i] + 2*eps;
-        diffxy[i] = x[i] - y[i];
+        y.coeffRef(i) = x.coeffRef(i);
+        x.coeffRef(i) = y.coeffRef(i) + 2*eps;
+        diffxy.coeffRef(i) = x.coeffRef(i) - y.coeffRef(i);
       }
   int n_ite(0.);
 
-  while(diffxy.lpNorm<Infinity>() > eps && n_ite < n_ite_max)
+  while(diffxy.norm() > eps && n_ite < n_ite_max)
     {
         for( int i = 0 ; i<x.size() ; ++i)
-          {x[i] = y[i];}
+          {x.coeffRef(i) = y.coeffRef(i);}
+
         for( int i = 0 ; i<x.size() ; ++i)
           {
             s1=0.;
             for(int j =0 ; j< i ; ++j )
-              {s1 += A(i,j)*y[j] ; }
+              {s1 += A.coeffRef(i,j)*y.coeffRef(j); }
 
             for(int j = i+1 ; j< x.size() ; ++j)
-              {s1 += A(i,j)*x[j]; }
+              {s1 += A.coeffRef(i,j)*x.coeffRef(j); }
 
-            y[i] = (b[i] - s1)/A(i,i);
+            y.coeffRef(i) = (b.coeffRef(i) - s1)/(A.coeffRef(i,i));
            }
 
            n_ite = n_ite + 1 ;
 
            for( int i = 0 ; i<x.size() ; ++i)
-           {diffxy[i] = x[i] - y[i];}
+           {diffxy.coeffRef(i) = x.coeffRef(i) - y.coeffRef(i);}
     }
     if(n_ite > n_ite_max)
       {cout << "Tolérance non atteinte"<<endl;}
-  //   cout <<"n_ite = "<<n_ite<<endl;
+     cout << "SGS a cv en " << n_ite<< " itérations"<< endl;
+
     return x;
 }
 
@@ -74,6 +72,10 @@ SparseVector<double> res_min( SparseMatrix<double> A , SparseVector<double> b , 
     r = r - alpha*z;
     n_ite++;
   }
+   if(n_ite > n_ite_max)
+      {cout << "Tolérance non atteinte"<<endl;}
+     cout << "Le résidu minimum a cv en " << n_ite<< " itérations"<< endl;
+  
   return x;
 }
 
