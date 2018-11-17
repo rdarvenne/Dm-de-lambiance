@@ -56,15 +56,16 @@ cout <<"    "<<endl;
 cout <<"b = "<<endl<< b <<endl;
 cout <<"    "<<endl;
 
-// x = SGS( An , b ,  x , 0.01 , 200 );
-// cout <<"x avec SGS = "<<endl << x <<endl;
-// cout <<"    "<<endl;
-// cout <<"Vérification en calculant An.x = "<<endl<< An*x<<endl;
-//
-// cout<<"---------------------------------------"<<endl;
-// cout<<"Avec res min"<<endl;
-// cout <<"    "<<endl;
-//
+x = SGS( An , b ,  x , 0.01 , 200 );
+cout <<"x avec SGS = "<<endl << x <<endl;
+cout <<"    "<<endl;
+cout <<"Vérification en calculant An.x = "<<endl<< An*x<<endl;
+
+ cout<<"---------------------------------------"<<endl;
+ cout<<"Avec res min"<<endl;
+ cout <<"    "<<endl;
+  
+  
 SparseVector<double> x0;
 x0.resize(x.size());
 for( int i = 0 ; i < x.size() ; ++i)
