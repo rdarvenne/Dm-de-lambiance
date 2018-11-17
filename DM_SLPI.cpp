@@ -81,7 +81,7 @@ SparseVector<double> res_min( SparseMatrix<double> A , SparseVector<double> b , 
 
 SparseVector<double> grad_conj( SparseMatrix<double> A , SparseVector<double> b , SparseVector<double> x , SparseVector<double> x0, double eps , int n_ite_max )
   {
-    SparseVector<double> p0 ,pold , r0 , pnew  , rold ,rnew ,xnew ,xold;
+    SparseVector<double> p0 ,pold , r0 , pnew  , rold ,rnew ,xnew ,xold, z;
     int n_ite ;
     double alpha , beta ;
 
@@ -93,7 +93,8 @@ SparseVector<double> grad_conj( SparseMatrix<double> A , SparseVector<double> b 
     rnew.resize(x.size());
     xold.resize(x.size());
     xnew.resize(x.size());
-
+    z.resize(x.size());
+  
     r0 = A*x0 - b;
     p0 = -r0 ;
     pold = p0 ;
@@ -103,9 +104,10 @@ SparseVector<double> grad_conj( SparseMatrix<double> A , SparseVector<double> b 
 
     while (rnew.norm() > eps && n_ite <= n_ite_max)
      {
-       alpha   =  -pold.dot(rold)/(A*pold).dot(pold) ;
+       z    = A*pold;
+       alpha   =  -pold.dot(rold)/(z).dot(pold) ;
        xnew = xold + alpha*pold ;
-       rnew = rold + alpha * A*pold;
+       rnew = rold + alpha * z;
        beta = rnew.dot(rnew)/rold.dot(rold);
        pnew = -rnew + beta*pold;
        xold = xnew;
