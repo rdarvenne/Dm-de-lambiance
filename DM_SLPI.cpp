@@ -6,7 +6,6 @@
 #include <fstream>
 #include <sstream>
 #include<complex>
-#include "Dense"
 #include "Sparse"
 using namespace std;
 using namespace Eigen;
@@ -16,7 +15,7 @@ SparseVector<double> SGS( SparseMatrix<double> A , SparseVector<double> b , Spar
   double s1(0.) ;
   int n = b.size();
   SparseVector<double> y(n) , diffxy(n) , r(n);
-  
+
   for( int i = 0 ; i<x.size() ; i++)
       {
         y.coeffRef(i) = x.coeffRef(i);
@@ -100,6 +99,7 @@ SparseVector<double> res_min( SparseMatrix<double> A , SparseVector<double> b , 
     x = x + alpha*r;
     r = r - alpha*z;
     n_ite++;
+    cout<<n_ite<<endl;
     if(mon_flux)
          {
            mon_flux<<n_ite<<" "<<r.norm()<<endl;
@@ -140,9 +140,7 @@ SparseVector<double> grad_conj( SparseMatrix<double> A , SparseVector<double> b 
     std::string name_file = ("sol_N"+to_string(n)+"_gradconj.txt");  //commande pour modifier le nom de chaque fichier
     mon_flux.open(name_file, ios::out);
     if(mon_flux)
-         {
-           mon_flux<<n_ite<<" "<<r.norm()<<endl;
-         }
+         {mon_flux<<n_ite<<" "<<r.norm()<<endl;}
 
     while (r.norm() > eps && n_ite <= n_ite_max)
      {
@@ -199,8 +197,8 @@ SparseVector<double> grad_conj( SparseMatrix<double> A , SparseVector<double> b 
       int col = atoi(colonne.c_str());
       double val = atof(valeur.c_str());
 
-      liste_elem.push_back({li-1,col-1,val});  //stoi pour passer de string à int et stod idem avec double
-      if ((colonne != ligne) && sym) // dans le cas de cette matrice symétrique seulement la moitié des éléments sont référencés dans le fichier texte
+      liste_elem.push_back({li-1,col-1,val});  //atoi pour passer de string à int et atof idem avec double
+      if ((colonne != ligne) && sym) // dans le cas d'une matrice symétrique seulement la moitié des éléments sont dans le fichier texte
       {
         liste_elem.push_back({col-1,li-1,val});
       }
