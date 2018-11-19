@@ -16,7 +16,7 @@ MethIterative::~MethIterative()
 
 void MethIterative::MatrixInitialize(Matrix<double, Dynamic, Dynamic> A)
 {
-  _A.resize(A.size(), A.size());
+  _A.resize(A.rows(), A.cols());
   _A = A;
 }
 
@@ -67,8 +67,46 @@ const VectorXd & MethIterative::Getp() const
   return _p;
 }
 
+void SGS::Initialize(VectorXd x0, VectorXd b)
+{
+  _x = x0;
+  _b = b;
+  _r = _b - _A*_x;
+  
+  Matrix<double, Dynamic, Dynamic> U, L, D;
+  U.resize(_A.rows(), _A.cols()), L.resize(_A.rows(),_A.cols()), D.resize(_A.rows(),_A.cols());
+  U = _A;
+  L = _A;
+  for (int i=0; i<_A.rows(); i++)
+  {
+    for (int j=0; j<_A.cols(); j++)
+    {
+      if (i>j)
+        U(i,j) = 0.;
+      else if (j>i)
+        L(i,j) = 0.;
+
+      else
+        D(i,i) = 1./_A(i,i);
+    }
+  }
+  _M = L*D*U;
+}
+
 void SGS::Advance(VectorXd z)
 {
+  VectorXd y(_x.size()), w(_x.size());
+
+  FullPivLU< Matrix<double, Dynamic, Dynamic> > lu1;
+  lu1.compute(_M);
+  y = lu1.solve(_b);
+
+  FullPivLU< Matrix<double, Dynamic, Dynamic> > lu2;
+  lu2.compute(_M);
+  w = lu2.solve(z);
+
+  _x += - w + y;
+  _r = _b - _A*_x;
 
 }
 

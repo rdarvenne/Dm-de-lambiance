@@ -9,6 +9,7 @@
 #include <complex>
 #include "Dense"
 #include "Sparse"
+#include "Eigen"
 
 
 class MethIterative
@@ -28,7 +29,7 @@ class MethIterative
     // initialise une Matrice
     void MatrixInitialize(Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> A);
     // initialise les données
-    void Initialize(Eigen::VectorXd x0, Eigen::VectorXd b);
+    virtual void Initialize(Eigen::VectorXd x0, Eigen::VectorXd b);
     // initialise la matrice A venant d'un fichier
     //SparseMatrix<double> MatrixInitialize(const std::string name_file_read, bool sym);
     // exécute une itération
@@ -53,9 +54,13 @@ class GradientConj : public MethIterative
 
 class SGS : public MethIterative
 {
+  private:
+    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> _M;
   public:
+    void Initialize(Eigen::VectorXd x0, Eigen::VectorXd b);
     void Advance(Eigen::VectorXd z);
 };
+
 
 #define _Meth_Iterative_H
 #endif
