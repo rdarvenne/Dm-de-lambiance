@@ -19,7 +19,7 @@ class MethIterative
     Eigen::VectorXd _r;  // vecteur résidu
     Eigen::VectorXd _b;  // vecteur du second membre
     Eigen::VectorXd _p;
-    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> _A; // matrice du systeme
+    Eigen::SparseMatrix<double> _A; // matrice du systeme
 
   public:
     // constructeur à partir d'une matrice A dense donnée
@@ -27,9 +27,9 @@ class MethIterative
     // destructeur
     ~MethIterative();
     // initialise une Matrice
-    void MatrixInitialize(Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> A);
+    void MatrixInitialize(Eigen::SparseMatrix<double> A);
     // initialise les données
-    virtual void Initialize(Eigen::VectorXd x0, Eigen::VectorXd b);
+    virtual void Initialize(Eigen::VectorXd x0, Eigen::VectorXd b)=0;
     // initialise la matrice A venant d'un fichier
     //SparseMatrix<double> MatrixInitialize(const std::string name_file_read, bool sym);
     // exécute une itération
@@ -38,24 +38,28 @@ class MethIterative
     const Eigen::VectorXd & GetIterateSolution() const;
     const Eigen::VectorXd & GetResidu() const;
     const Eigen::VectorXd & Getp() const;
+    void saveSolution(int N , std::string name_file ,  int n_iter , double residu);
+
 };
 
 class ResiduMin : public MethIterative
 {
   public:
     void Advance(Eigen::VectorXd z);
+    void Initialize(Eigen::VectorXd x0, Eigen::VectorXd b);
 };
 
 class GradientConj : public MethIterative
 {
   public:
     void Advance(Eigen::VectorXd z);
+    void Initialize(Eigen::VectorXd x0, Eigen::VectorXd b);
 };
 
 class SGS : public MethIterative
 {
   private:
-    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> _M;
+    Eigen::SparseMatrix<double> _M;
   public:
     void Initialize(Eigen::VectorXd x0, Eigen::VectorXd b);
     void Advance(Eigen::VectorXd z);

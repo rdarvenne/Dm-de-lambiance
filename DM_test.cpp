@@ -14,19 +14,34 @@ MethIterative::~MethIterative()
 {}
 
 
-void MethIterative::MatrixInitialize(Matrix<double, Dynamic, Dynamic> A)
+void MethIterative::MatrixInitialize(SparseMatrix<double> A)
 {
   _A.resize(A.rows(), A.cols());
   _A = A;
 }
 
 // initialisation des données
-void MethIterative::Initialize(VectorXd x0, VectorXd b)
+void GradientConj::Initialize(VectorXd x0, VectorXd b)
 {
   _x = x0;
   _b = b;
   _r = _b - _A*_x;
   _p = _r;                   // utile pour le GradientConj
+
+  ofstream mon_flux; // Contruit un objet "ofstream"
+  string name_file = ("/sol_"+to_string(_x.size())+"_grad_conj.txt");  //commande pour modifier le nom de chaque fichier
+  mon_flux.open(name_file,ios::out);
+}
+
+void ResiduMin::Initialize(VectorXd x0, VectorXd b)
+{
+  _x = x0;
+  _b = b;
+  _r = _b - _A*_x;
+
+  ofstream mon_flux; // Contruit un objet "ofstream"
+  string name_file = ("/sol_"+to_string(_x.size())+"_res_min.txt");  //commande pour modifier le nom de chaque fichier
+  mon_flux.open(name_file,ios::out);
 }
 
 void ResiduMin::Advance(VectorXd z)
@@ -38,12 +53,12 @@ void ResiduMin::Advance(VectorXd z)
   _r += - alpha*z;
 }
 
-const Eigen::VectorXd & MethIterative::GetIterateSolution() const
+const VectorXd & MethIterative::GetIterateSolution() const
 {
   return _x;
 }
 
-const Eigen::VectorXd & MethIterative::GetResidu() const
+const VectorXd & MethIterative::GetResidu() const
 {
   return _r;
 }
@@ -72,8 +87,8 @@ void SGS::Initialize(VectorXd x0, VectorXd b)
   _x = x0;
   _b = b;
   _r = _b - _A*_x;
-  
-  Matrix<double, Dynamic, Dynamic> U, L, D;
+
+  SparseMatrix<double> U, L, D;
   U.resize(_A.rows(), _A.cols()), L.resize(_A.rows(),_A.cols()), D.resize(_A.rows(),_A.cols());
   U = _A;
   L = _A;
@@ -82,33 +97,53 @@ void SGS::Initialize(VectorXd x0, VectorXd b)
     for (int j=0; j<_A.cols(); j++)
     {
       if (i>j)
-        U(i,j) = 0.;
+        U.coeffRef(i,j) = 0.;
       else if (j>i)
-        L(i,j) = 0.;
+        L.coeffRef(i,j) = 0.;
 
       else
-        D(i,i) = 1./_A(i,i);
+        D.coeffRef(i,i) = 1./_A.coeffRef(i,i);
     }
   }
   _M = L*D*U;
+
+
 }
 
 void SGS::Advance(VectorXd z)
 {
   VectorXd y(_x.size()), w(_x.size());
 
-  FullPivLU< Matrix<double, Dynamic, Dynamic> > lu1;
-  lu1.compute(_M);
+  SparseLU< SparseMatrix<double> > lu1;
+  lu1.analyzePattern(_M) ;
+  lu1.factorize(_M);
   y = lu1.solve(_b);
 
-  FullPivLU< Matrix<double, Dynamic, Dynamic> > lu2;
-  lu2.compute(_M);
+  SparseLU< SparseMatrix<double> > lu2;
+  lu2.analyzePattern(_M) ;
+  lu2.factorize(_M);
   w = lu2.solve(z);
 
   _x += - w + y;
   _r = _b - _A*_x;
 
 }
+
+
+// Écrit un fichier avec la solution au format Paraview
+void MethIterative::saveSolution(int N ,string name_file , int n_iter , double residu)
+{
+  ofstream mon_flux; // Contruit un objet "ofstream"
+  // name_file = ("/sol_"+to_string(N)+"_"+name_file+".txt");  //commande pour modifier le nom de chaque fichier
+  mon_flux.open(name_file,ios::out);
+
+  if(mon_flux)
+  {
+      mon_flux<<n_iter<<residu<<endl;
+  }
+  mon_flux.close();
+}
+
 
 
 #define _Meth_Iterative_H
