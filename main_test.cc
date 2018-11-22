@@ -6,10 +6,10 @@ using namespace Eigen;
 int main()
 {
   int userChoiceMeth(0);
-  int n_ite_max(200);
+  int n_ite_max(200000);
   double eps(0.01);
-  double alpha(2.);
-  int const N(20);
+  int const N(10);
+  double alpha(3*N);
   string name_file;
 
   cout << "Veuillez choisir la méthode de résolution pour Ax=b:" << endl;
@@ -29,17 +29,16 @@ x2.setZero();
 In.setIdentity();
 
 //création de Bn
-const int min=0;
-const int max=2;
+
 for (int i =0 ; i<N ; i++)
   {
     for (int j =0 ; j<N ; j++)
       {
-      double nb_alea = min + (rand()%(max-min));
+      double nb_alea = rand()/(double)RAND_MAX  ;
       Bn.coeffRef(i,j) = nb_alea;
     }
   }
-//  cout <<"Bn"<<Bn<<endl;
+
 
 //Création de An
 BnTBn = Bn.transpose()*Bn;
@@ -65,7 +64,7 @@ for (int i =0 ; i< N; i++)
   VectorXd x0(N);
   for( int i = 0 ; i < N ; ++i)
   {
-    x0.coeffRef(i)=0.;
+    x0.coeffRef(i)=1.;
   }
 
   int n_ite(0);
@@ -82,14 +81,20 @@ for (int i =0 ; i< N; i++)
     case 1:
       MethIterate = new ResiduMin();
       MethIterate->MatrixInitialize(An);
-
       MethIterate->Initialize(x0, b);
+
+      name_file = "sol"+to_string(N)+"_res_min.txt";
+      mon_flux.open(name_file);
 
       while(MethIterate->GetResidu().norm() > eps && n_ite < n_ite_max)
       {
         z = An*MethIterate->GetResidu();
         MethIterate->Advance(z);
         n_ite++;
+        if(mon_flux)
+          {
+              mon_flux<<n_ite<<" "<<MethIterate->GetResidu().norm()<<endl;
+          }
       }
 
       if(n_ite > n_ite_max)
@@ -100,7 +105,7 @@ for (int i =0 ; i< N; i++)
       cout <<"    "<<endl;
       cout << An*MethIterate->GetIterateSolution()<<endl;
       cout <<"    "<<endl;
-      cout << "nb d'itérations : " << n_ite << endl;
+      cout << "nb d'itérations pour res min = " << n_ite << endl;
 
       break;
 
@@ -109,11 +114,18 @@ for (int i =0 ; i< N; i++)
       MethIterate->MatrixInitialize(An);
       MethIterate->Initialize(x0, b);
 
+      name_file = "sol"+to_string(N)+"_grad_conj.txt";
+      mon_flux.open(name_file);
+
       while(MethIterate->GetResidu().norm() > eps && n_ite < n_ite_max)
       {
         z = An*MethIterate->Getp();
         MethIterate->Advance(z);
         n_ite++;
+        if(mon_flux)
+          {
+              mon_flux<<n_ite<<" "<<MethIterate->GetResidu().norm()<<endl;
+          }
       }
 
       if (n_ite > n_ite_max)
@@ -124,7 +136,7 @@ for (int i =0 ; i< N; i++)
       cout <<"    "<<endl;
       cout << An*MethIterate->GetIterateSolution()<<endl;
       cout <<"    "<<endl;
-      cout << "nb d'itérations : " << n_ite << endl;
+      cout << "nb d'itérations pour grad conj = " << n_ite << endl;
 
       break;
 
@@ -133,19 +145,21 @@ for (int i =0 ; i< N; i++)
       MethIterate->MatrixInitialize(An);
       MethIterate->Initialize(x0, b);
 
-      name_file = "sol"+to_string(N)+"_SGS.txt"; 
+
+      name_file = "sol"+to_string(N)+"_SGS.txt";
       mon_flux.open(name_file);
 
       while(MethIterate->GetResidu().norm() > eps && n_ite < n_ite_max)
       {
         z = An*MethIterate->GetIterateSolution();
         MethIterate->Advance(z);
-
+        cout<<n_ite<<endl;
+        n_ite++;
           if(mon_flux)
             {
               mon_flux<<n_ite<<" "<<MethIterate->GetResidu().norm()<<endl;
             }
-        n_ite++;
+
       }
 
 
@@ -157,7 +171,7 @@ for (int i =0 ; i< N; i++)
       cout <<"    "<<endl;
       cout << An*MethIterate->GetIterateSolution()<<endl;
       cout <<"    "<<endl;
-      cout << "nb d'itérations : " << n_ite << endl;
+      cout << "nb d'itérations pour SGS = " << n_ite << endl;
       break;
 
     default:

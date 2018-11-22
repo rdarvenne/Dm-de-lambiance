@@ -40,6 +40,7 @@ class MethIterative
     const Eigen::VectorXd & Getp() const;
     void saveSolution(int N , std::string name_file ,  int n_iter , double residu);
 
+
 };
 
 class ResiduMin : public MethIterative
@@ -60,10 +61,20 @@ class SGS : public MethIterative
 {
   private:
     Eigen::SparseMatrix<double> _M;
+    Eigen::VectorXd _y;
   public:
     void Initialize(Eigen::VectorXd x0, Eigen::VectorXd b);
     void Advance(Eigen::VectorXd z);
 };
+
+class Gmres : public MethIterative
+{
+  public:
+    void Advance(Eigen::VectorXd z);
+    void Initialize(Eigen::VectorXd x0, Eigen::VectorXd b);
+    void Arnoldi(Eigen::VectorXd v);
+};
+
 
 
 #define _Meth_Iterative_H

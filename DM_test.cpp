@@ -107,24 +107,29 @@ void SGS::Initialize(VectorXd x0, VectorXd b)
   }
   _M = L*D*U;
 
+  SparseLU< SparseMatrix<double>> lu1;
+
+  lu1.analyzePattern(_M) ;
+  lu1.factorize(_M);
+  _y = lu1.solve(_b);
 
 }
 
 void SGS::Advance(VectorXd z)
 {
-  VectorXd y(_x.size()), w(_x.size());
+  VectorXd  w(_x.size());
 
-  SparseLU< SparseMatrix<double> > lu1;
-  lu1.analyzePattern(_M) ;
-  lu1.factorize(_M);
-  y = lu1.solve(_b);
+  // SparseLU< SparseMatrix<double> > lu1;
+  // lu1.analyzePattern(_M) ;
+  // lu1.factorize(_M);
+  // y = lu1.solve(_b);
 
   SparseLU< SparseMatrix<double> > lu2;
   lu2.analyzePattern(_M) ;
   lu2.factorize(_M);
   w = lu2.solve(z);
 
-  _x += - w + y;
+  _x += - w + _y;
   _r = _b - _A*_x;
 
 }
@@ -144,7 +149,20 @@ void MethIterative::saveSolution(int N ,string name_file , int n_iter , double r
   mon_flux.close();
 }
 
+void Gmres::Arnoldi( VectorXd v)
+{
+  int m = _x.size();
+  VectorXd<VectorXd> Vm;
 
+  Vm[1] = v/v.norm();
+
+  for (int j=0 ; j<m ; j++)
+  {VectorXd Av = A* }
+
+
+
+
+}
 
 #define _Meth_Iterative_H
 #endif
