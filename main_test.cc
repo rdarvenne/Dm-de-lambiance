@@ -8,7 +8,7 @@ int main()
   int userChoiceMeth(0);
   int n_ite_max(200000);
   double eps(0.01);
-  int const N(3);
+  int const N(5357);
   double alpha(3*N);
   string name_file;
 
@@ -28,44 +28,49 @@ x2.setZero();
 
 In.setIdentity();
 
-//création de Bn
+// //création de Bn
+//
+// for (int i =0 ; i<N ; i++)
+//   {
+//     for (int j =0 ; j<N ; j++)
+//       {
+//       double nb_alea = rand()/(double)RAND_MAX  ;
+//       Bn.coeffRef(i,j) = nb_alea;
+//     }
+//   }
+//
+//
+// //Création de An
+// BnTBn = Bn.transpose()*Bn;
+// for (int i =0 ; i< N; i++)
+//   {
+//     for (int j =0 ; j< N; j++)
+//       {
+//         An.insert(i,j) =alpha*In.coeffRef(i,j) + BnTBn.coeffRef(i,j);
+//
+// }
+// }
+//  //cout <<"An = "<<endl<< An <<endl;
 
-for (int i =0 ; i<N ; i++)
-  {
-    for (int j =0 ; j<N ; j++)
-      {
-      double nb_alea = rand()/(double)RAND_MAX  ;
-      Bn.coeffRef(i,j) = nb_alea;
-    }
-  }
 
 
-//Création de An
-BnTBn = Bn.transpose()*Bn;
-for (int i =0 ; i< N; i++)
-  {
-    for (int j =0 ; j< N; j++)
-      {
-        An.insert(i,j) =alpha*In.coeffRef(i,j) + BnTBn.coeffRef(i,j);
-
-}
-}
- //cout <<"An = "<<endl<< An <<endl;
+VectorXd x0(N);
+for( int i = 0 ; i < N ; ++i)
+  {x0(i) = 1.;}
 
  //création de b
- for (int i =0 ; i< N;i++)
-  {b.coeffRef(i) = 1. + i;}
+ b = An*x0;
 // cout <<"    "<<endl;
 // cout <<"b = "<<endl<< b <<endl;
 // cout <<"    "<<endl;
+ cout <<"b est créé"<<endl;
 
 
-  // creation de x0
-  VectorXd x0(N);
-  for( int i = 0 ; i < N ; ++i)
-  {
-    x0.coeffRef(i)=1.;
-  }
+for( int i = 0 ; i < N ; ++i)
+  {x0.coeffRef(i) = 2.;}
+ cout <<"x0 est créé"<<endl;
+
+
 
   int n_ite(0);
   VectorXd z(N);
@@ -80,6 +85,7 @@ for (int i =0 ; i< N; i++)
   {
     case 1:
       MethIterate = new ResiduMin();
+      An = MethIterate->create_mat("s3rmt3m3.mtx", true );
       MethIterate->MatrixInitialize(An);
       MethIterate->Initialize(x0, b);
 
@@ -88,8 +94,11 @@ for (int i =0 ; i< N; i++)
 
       while(MethIterate->GetResidu().norm() > eps && n_ite < n_ite_max)
       {
+      //  cout<<"début while"<<endl;
         z = An*MethIterate->GetResidu();
+      //  cout<<"milieu while"<<endl;
         MethIterate->Advance(z);
+
         n_ite++;
         if(mon_flux)
           {
@@ -111,6 +120,9 @@ for (int i =0 ; i< N; i++)
 
     case 2:
       MethIterate = new GradientConj();
+      cout<<"début création de An"<<endl;
+      An = MethIterate->create_mat("s3rmt3m3.mtx", true );
+      cout<<"An créé"<<endl;
       MethIterate->MatrixInitialize(An);
       MethIterate->Initialize(x0, b);
 
@@ -132,9 +144,9 @@ for (int i =0 ; i< N; i++)
         {cout << "Tolérance non atteinte"<<endl;}
 
       cout <<"  "<<endl;   // d'après doc internet si x0 est trop éloigné de x les résultats ne converge plus
-      cout <<"x avec grad_conj = "<<endl << MethIterate->GetIterateSolution() <<endl;
+    //  cout <<"x avec grad_conj = "<<endl << MethIterate->GetIterateSolution() <<endl;
       cout <<"    "<<endl;
-      cout << An*MethIterate->GetIterateSolution()<<endl;
+    //  cout << An*MethIterate->GetIterateSolution()<<endl;
       cout <<"    "<<endl;
       cout << "nb d'itérations pour grad conj = " << n_ite << endl;
 
@@ -142,9 +154,12 @@ for (int i =0 ; i< N; i++)
 
     case 3:
       MethIterate = new SGS();
-      MethIterate->MatrixInitialize(An);
-      MethIterate->Initialize(x0, b);
 
+      An = MethIterate->create_mat("s3rmt3m3.mtx", true );
+      MethIterate->MatrixInitialize(An);
+      cout<<"mat_initialize"<<endl;
+      MethIterate->Initialize(x0, b);
+      cout<<"sortie initialise"<<endl;
 
       name_file = "sol"+to_string(N)+"_SGS.txt";
       mon_flux.open(name_file);

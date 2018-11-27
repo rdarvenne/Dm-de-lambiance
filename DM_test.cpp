@@ -37,8 +37,11 @@ void ResiduMin::Initialize(VectorXd x0, VectorXd b)
 {
   _x = x0;
   _b = b;
+  cout<<"bite dedans"<<endl;
+
   _r = _b - _A*_x;
 
+    cout<<"cul dedans"<<endl;
   ofstream mon_flux; // Contruit un objet "ofstream"
   string name_file = ("/sol_"+to_string(_x.size())+"_res_min.txt");  //commande pour modifier le nom de chaque fichier
   mon_flux.open(name_file,ios::out);
@@ -148,6 +151,49 @@ void MethIterative::saveSolution(int N ,string name_file , int n_iter , double r
   }
   mon_flux.close();
 }
+
+SparseMatrix<double> MethIterative::create_mat(const string name_file_read, bool sym)
+ {
+   int N(0.);
+  // Eigen::SparseMatrix<double> A ;
+   ifstream mon_flux(name_file_read);
+
+   string ligne, colonne, valeur;
+   getline(mon_flux,ligne); //lit la première ligne qui ne nous intéresse pas
+
+   mon_flux >> N; //lit le premier mot de la ligne 2 correspond au nombre de lignes
+
+   int nonzero_elem;
+   mon_flux >> colonne; //lit le nombre de colonnes (valeur stockée inutilement, je ne savais pas comment lire sans stocker...)
+   mon_flux >> nonzero_elem; //lit le nombre d'élements non nuls
+
+   // Définition de la la matrice A.
+   _A.resize(N,N);
+   vector<Triplet<double>> liste_elem;
+   for (int i = 0; i < nonzero_elem; i++)
+   {
+     mon_flux >> ligne;
+     mon_flux >> colonne;
+     mon_flux >> valeur;
+
+     int li = atoi(ligne.c_str());
+     int col = atoi(colonne.c_str());
+     double val = atof(valeur.c_str());
+
+     liste_elem.push_back({li-1,col-1,val});  //atoi pour passer de string à int et atof idem avec double
+     if ((colonne != ligne) && sym) // dans le cas d'une matrice symétrique seulement la moitié des éléments sont dans le fichier texte
+     {
+       liste_elem.push_back({col-1,li-1,val});
+     }
+   }
+   _A.setFromTriplets(liste_elem.begin(),liste_elem.end());
+   mon_flux.close();
+
+   return _A;
+}
+
+
+
 
 void Arnoldi( SparseMatrix<double> A , VectorXd v)
 {

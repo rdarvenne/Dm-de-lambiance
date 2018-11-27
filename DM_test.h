@@ -39,7 +39,7 @@ class MethIterative
     const Eigen::VectorXd & GetResidu() const;
     const Eigen::VectorXd & Getp() const;
     void saveSolution(int N , std::string name_file ,  int n_iter , double residu);
-
+    Eigen::SparseMatrix<double> create_mat(const std::string name_file_read, bool sym);
 
 };
 
