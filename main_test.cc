@@ -8,7 +8,7 @@ int main()
   int userChoiceMeth(0);
   int n_ite_max(200000);
   double eps(0.01);
-  int const N(10);
+  int const N(8);
   double alpha(3*N);
   string name_file;
 
@@ -153,7 +153,6 @@ for (int i =0 ; i< N; i++)
       {
         z = An*MethIterate->GetIterateSolution();
         MethIterate->Advance(z);
-        cout<<n_ite<<endl;
         n_ite++;
           if(mon_flux)
             {
@@ -174,16 +173,21 @@ for (int i =0 ; i< N; i++)
       cout << "nb d'itérations pour SGS = " << n_ite << endl;
       break;
 
+
+
     default:
       cout << "Ce choix n'est pas possible" << endl;
       exit(0);
   }
 
 
+
   delete MethIterate;
   MethIterate = 0;
-
   mon_flux.close();
+
+
+
 
   return 0;
 }

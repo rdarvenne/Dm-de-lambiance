@@ -60,7 +60,8 @@ class GradientConj : public MethIterative
 class SGS : public MethIterative
 {
   private:
-    Eigen::SparseMatrix<double> _M;
+    Eigen::SparseMatrix<double> _L;
+    Eigen::SparseMatrix<double> _U;
     Eigen::VectorXd _y;
   public:
     void Initialize(Eigen::VectorXd x0, Eigen::VectorXd b);
@@ -69,11 +70,19 @@ class SGS : public MethIterative
 
 class Gmres : public MethIterative
 {
+  private:
+    std::vector< Eigen::SparseVector<double> > _Vm ;
+    Eigen::SparseMatrix<double> _Hm;
   public:
+    const Eigen::SparseMatrix<double> & GetHm() const;
+    const std::vector< Eigen::SparseVector<double> > & GetVm() const;
     void Advance(Eigen::VectorXd z);
     void Initialize(Eigen::VectorXd x0, Eigen::VectorXd b);
     void Arnoldi(Eigen::VectorXd v);
 };
+
+Eigen::VectorXd GetSolTriangSup(Eigen::SparseMatrix<double> U, Eigen::VectorXd b);
+Eigen::VectorXd GetSolTriangInf(Eigen::SparseMatrix<double> L, Eigen::VectorXd b);
 
 
 
