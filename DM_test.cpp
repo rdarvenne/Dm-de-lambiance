@@ -88,31 +88,49 @@ void SGS::Initialize(VectorXd x0, VectorXd b)
   _b = b;
   _r = _b - _A*_x;
 
-  _U.resize(_A.rows(), _A.cols()), _L.resize(_A.rows(),_A.cols());
-  _U.setZero();
-  _L.setZero();
+  SparseMatrix<double> U, L, D;
+  U.resize(_A.rows(), _A.cols()), L.resize(_A.rows(),_A.cols()), D.resize(_A.rows(),_A.cols());
+  _U.resize(_A.rows(), _A.cols()), _L.resize(_A.rows(), _A.cols());
+  U = _A;
+  L = _A;
+  _U = _A;
+  _L = _A;
   for (int i=0; i<_A.rows(); i++)
   {
     for (int j=0; j<_A.cols(); j++)
     {
       if (i>j)
-        _L.coeffRef(i,j) = _A.coeffRef(i,j);
+        {U.coeffRef(i,j) = 0.;
+        _U.coeffRef(i,j) = 0.;}
       else if (j>i)
-        _U.coeffRef(i,j) = _A.coeffRef(i,j);
+        {L.coeffRef(i,j) = 0.;
+        _L.coeffRef(i,j) = 0.;}
       else
-      {
-        _L.coeffRef(i,j) = 1.;
-        _U.coeffRef(i,j) = _A.coeffRef(i,j);
-      }
+        {D.coeffRef(i,i) = 1./_A.coeffRef(i,i);
+        _L.coeffRef(i,i) = 1./_A.coeffRef(i,i);}
     }
   }
-  VectorXd y_bis(_A.cols());
+  _M = L*D*U;
+  _L = L*D;
+  _U = U;
+  cout << _M << endl;
+  cout << "--------" << endl;
+  cout << _L*_U << endl;
+  /*
+  SparseLU< SparseMatrix<double>> lu1;
 
+  lu1.analyzePattern(_M) ;
+  lu1.factorize(_M);
+  _y = lu1.solve(_b);
+
+  SparseLU< SparseMatrix<double> > lu2;
+  lu2.analyzePattern(_L*_U);
+  lu2.factorize(_L*_U);
+  _y = lu2.solve(_b);
+  */
+  VectorXd y_bis(_x.size());
   y_bis = GetSolTriangInf(_L, b);
   _y = GetSolTriangSup(_U, y_bis);
-  cout << y_bis << endl;
-  cout << "----------------" << endl;
-  cout << _U*_y << endl;
 
 }
 
@@ -124,10 +142,14 @@ void SGS::Advance(VectorXd z)
   // lu1.analyzePattern(_M) ;
   // lu1.factorize(_M);
   // y = lu1.solve(_b);
-
+  /*
+  SparseLU< SparseMatrix<double> > lu2;
+  lu2.analyzePattern(_M) ;
+  lu2.factorize(_M);
+  w = lu2.solve(z);
+  */
   w_bis = GetSolTriangInf(_L, z);
   w = GetSolTriangSup(_U, w_bis);
-
 
   _x += - w + _y;
   _r = _b - _A*_x;

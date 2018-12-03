@@ -8,8 +8,8 @@ int main()
   int userChoiceMeth(0);
   int n_ite_max(200000);
   double eps(0.01);
-  int const N(8);
-  double alpha(3*N);
+  int const N(15);
+  double alpha(3);
   string name_file;
 
   cout << "Veuillez choisir la méthode de résolution pour Ax=b:" << endl;

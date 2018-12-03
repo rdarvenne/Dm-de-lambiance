@@ -62,6 +62,7 @@ class SGS : public MethIterative
   private:
     Eigen::SparseMatrix<double> _L;
     Eigen::SparseMatrix<double> _U;
+    Eigen::SparseMatrix<double> _M;
     Eigen::VectorXd _y;
   public:
     void Initialize(Eigen::VectorXd x0, Eigen::VectorXd b);
