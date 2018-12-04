@@ -25,7 +25,7 @@ class MethIterative
     // constructeur à partir d'une matrice A dense donnée
     MethIterative();
     // destructeur
-    ~MethIterative();
+    virtual ~MethIterative();
     // initialise une Matrice
     void MatrixInitialize(Eigen::SparseMatrix<double> A);
     // initialise les données
@@ -72,14 +72,17 @@ class SGS : public MethIterative
 class Gmres : public MethIterative
 {
   private:
-    std::vector< Eigen::SparseVector<double> > _Vm ;
+    Eigen::SparseMatrix<double> _Vm ;
     Eigen::SparseMatrix<double> _Hm;
+    Eigen::SparseMatrix<double> _Qm;
+    Eigen::SparseMatrix<double> _Rm;
   public:
     const Eigen::SparseMatrix<double> & GetHm() const;
-    const std::vector< Eigen::SparseVector<double> > & GetVm() const;
+    const Eigen::SparseMatrix<double> & GetVm() const;
     void Advance(Eigen::VectorXd z);
     void Initialize(Eigen::VectorXd x0, Eigen::VectorXd b);
-    void Arnoldi(Eigen::VectorXd v);
+    void Arnoldi(Eigen::SparseMatrix<double> A, Eigen::VectorXd v);
+    void Givens(Eigen::SparseMatrix<double> Hm);
 };
 
 Eigen::VectorXd GetSolTriangSup(Eigen::SparseMatrix<double> U, Eigen::VectorXd b);

@@ -14,43 +14,11 @@ MethIterative::~MethIterative()
 {}
 
 
+///////////////////// CLASSE MERE ///////////////////////
 void MethIterative::MatrixInitialize(SparseMatrix<double> A)
 {
   _A.resize(A.rows(), A.cols());
   _A = A;
-}
-
-// initialisation des données
-void GradientConj::Initialize(VectorXd x0, VectorXd b)
-{
-  _x = x0;
-  _b = b;
-  _r = _b - _A*_x;
-  _p = _r;                   // utile pour le GradientConj
-
-  ofstream mon_flux; // Contruit un objet "ofstream"
-  string name_file = ("/sol_"+to_string(_x.size())+"_grad_conj.txt");  //commande pour modifier le nom de chaque fichier
-  mon_flux.open(name_file,ios::out);
-}
-
-void ResiduMin::Initialize(VectorXd x0, VectorXd b)
-{
-  _x = x0;
-  _b = b;
-  _r = _b - _A*_x;
-
-  ofstream mon_flux; // Contruit un objet "ofstream"
-  string name_file = ("/sol_"+to_string(_x.size())+"_res_min.txt");  //commande pour modifier le nom de chaque fichier
-  mon_flux.open(name_file,ios::out);
-}
-
-void ResiduMin::Advance(VectorXd z)
-{
-  double alpha(0.);
-  alpha = _r.dot(z)/z.dot(z);
-
-  _x += alpha*_r;
-  _r += - alpha*z;
 }
 
 const VectorXd & MethIterative::GetIterateSolution() const
@@ -63,99 +31,10 @@ const VectorXd & MethIterative::GetResidu() const
   return _r;
 }
 
-
-void GradientConj::Advance(VectorXd z)
-{
-  double alpha , gamma, stock_r;
-
-  stock_r = _r.dot(_r);
-
-  alpha   =  _r.dot(_r)/(z.dot(_p));
-  _x +=  alpha*_p ;
-  _r += - alpha*z ;
-  gamma = _r.dot(_r)/stock_r;
-  _p = _r + gamma*_p;
-}
-
 const VectorXd & MethIterative::Getp() const
 {
   return _p;
 }
-
-void SGS::Initialize(VectorXd x0, VectorXd b)
-{
-  _x = x0;
-  _b = b;
-  _r = _b - _A*_x;
-
-  SparseMatrix<double> U, L, D;
-  U.resize(_A.rows(), _A.cols()), L.resize(_A.rows(),_A.cols()), D.resize(_A.rows(),_A.cols());
-  _U.resize(_A.rows(), _A.cols()), _L.resize(_A.rows(), _A.cols());
-  U = _A;
-  L = _A;
-  _U = _A;
-  _L = _A;
-  for (int i=0; i<_A.rows(); i++)
-  {
-    for (int j=0; j<_A.cols(); j++)
-    {
-      if (i>j)
-        {U.coeffRef(i,j) = 0.;
-        _U.coeffRef(i,j) = 0.;}
-      else if (j>i)
-        {L.coeffRef(i,j) = 0.;
-        _L.coeffRef(i,j) = 0.;}
-      else
-        {D.coeffRef(i,i) = 1./_A.coeffRef(i,i);
-        _L.coeffRef(i,i) = 1./_A.coeffRef(i,i);}
-    }
-  }
-  _M = L*D*U;
-  _L = L*D;
-  _U = U;
-  cout << _M << endl;
-  cout << "--------" << endl;
-  cout << _L*_U << endl;
-  /*
-  SparseLU< SparseMatrix<double>> lu1;
-
-  lu1.analyzePattern(_M) ;
-  lu1.factorize(_M);
-  _y = lu1.solve(_b);
-
-  SparseLU< SparseMatrix<double> > lu2;
-  lu2.analyzePattern(_L*_U);
-  lu2.factorize(_L*_U);
-  _y = lu2.solve(_b);
-  */
-  VectorXd y_bis(_x.size());
-  y_bis = GetSolTriangInf(_L, b);
-  _y = GetSolTriangSup(_U, y_bis);
-
-}
-
-void SGS::Advance(VectorXd z)
-{
-  VectorXd  w(_x.size()), w_bis(_x.size());
-
-  // SparseLU< SparseMatrix<double> > lu1;
-  // lu1.analyzePattern(_M) ;
-  // lu1.factorize(_M);
-  // y = lu1.solve(_b);
-  /*
-  SparseLU< SparseMatrix<double> > lu2;
-  lu2.analyzePattern(_M) ;
-  lu2.factorize(_M);
-  w = lu2.solve(z);
-  */
-  w_bis = GetSolTriangInf(_L, z);
-  w = GetSolTriangSup(_U, w_bis);
-
-  _x += - w + _y;
-  _r = _b - _A*_x;
-
-}
-
 
 // Écrit un fichier avec la solution au format Paraview
 void MethIterative::saveSolution(int N ,string name_file , int n_iter , double residu)
@@ -171,12 +50,128 @@ void MethIterative::saveSolution(int N ,string name_file , int n_iter , double r
   mon_flux.close();
 }
 
-void Arnoldi( SparseMatrix<double> A , VectorXd v)
+
+///////////////////// Gradient Conjugué ///////////////////////
+// initialisation des données
+void GradientConj::Initialize(VectorXd x0, VectorXd b)
+{
+  _x = x0;
+  _b = b;
+  _r = _b - _A*_x;
+  _p = _r;                   // utile pour le GradientConj
+
+  ofstream mon_flux; // Contruit un objet "ofstream"
+  string name_file = ("/sol_"+to_string(_x.size())+"_grad_conj.txt");  //commande pour modifier le nom de chaque fichier
+  mon_flux.open(name_file,ios::out);
+}
+
+void GradientConj::Advance(VectorXd z)
+{
+  double alpha , gamma, stock_r;
+
+  stock_r = _r.dot(_r);
+
+  alpha   =  _r.dot(_r)/(z.dot(_p));
+  _x +=  alpha*_p ;
+  _r += - alpha*z ;
+  gamma = _r.dot(_r)/stock_r;
+  _p = _r + gamma*_p;
+}
+
+
+
+///////////////////// Residu Minimum ///////////////////////
+void ResiduMin::Initialize(VectorXd x0, VectorXd b)
+{
+  _x = x0;
+  _b = b;
+  _r = _b - _A*_x;
+
+  ofstream mon_flux; // Contruit un objet "ofstream"
+  string name_file = ("/sol_"+to_string(_x.size())+"_res_min.txt");  //commande pour modifier le nom de chaque fichier
+  mon_flux.open(name_file,ios::out);
+}
+
+
+void ResiduMin::Advance(VectorXd z)
+{
+  double alpha(0.);
+  alpha = _r.dot(z)/z.dot(z);
+
+  _x += alpha*_r;
+  _r += - alpha*z;
+}
+
+
+
+///////////////////// Gauss Seidel Symétrique ///////////////////////
+void SGS::Initialize(VectorXd x0, VectorXd b)
+{
+  _x = x0;
+  _b = b;
+  _r = _b - _A*_x;
+
+  SparseMatrix<double> U, L, D;
+  U.resize(_A.rows(), _A.cols()), L.resize(_A.rows(),_A.cols()), D.resize(_A.rows(),_A.cols());
+  _U.resize(_A.rows(), _A.cols()), _L.resize(_A.rows(), _A.cols());
+  U = _A;
+  L = _A;
+  for (int i=0; i<_A.rows(); i++)
+  {
+    for (int j=0; j<_A.cols(); j++)
+    {
+      if (i>j)
+        {U.coeffRef(i,j) = 0.;}
+      else if (j>i)
+        {L.coeffRef(i,j) = 0.;}
+      else
+      {D.coeffRef(i,i) = 1./_A.coeffRef(i,i);}
+    }
+  }
+  _L = L*D;
+  _U = U;
+
+  VectorXd y_bis(_x.size());
+  y_bis = GetSolTriangInf(_L, b);
+  _y = GetSolTriangSup(_U, y_bis);
+
+}
+
+void SGS::Advance(VectorXd z)
+{
+  VectorXd  w(_x.size()), w_bis(_x.size());
+
+  w_bis = GetSolTriangInf(_L, z);
+  w = GetSolTriangSup(_U, w_bis);
+
+  _x += - w + _y;
+  _r = _b - _A*_x;
+
+}
+
+
+///////////////////// GMRes ///////////////////////
+void Gmres::Initialize(VectorXd x0, VectorXd b)
+{
+  _x = x0;
+  _b = b;
+  _r = _b - _A*_x;
+  _p = _r;                   // utile pour le GradientConj
+
+  ofstream mon_flux; // Contruit un objet "ofstream"
+  string name_file = ("/sol_"+to_string(_x.size())+"_grad_conj.txt");  //commande pour modifier le nom de chaque fichier
+  mon_flux.open(name_file,ios::out);
+}
+
+
+void Gmres::Arnoldi( SparseMatrix<double> A , VectorXd v)
 {
   //dimension de l'espace
   int m = v.size();
 
-  vector< SparseVector<double> > _Vm ;
+  _Vm.resize(m+1, m);
+
+  vector< SparseVector<double> > Vm ;
   SparseMatrix<double> _Hm;
 
   SparseVector<double> v1 , s1 ;
@@ -188,46 +183,126 @@ void Arnoldi( SparseMatrix<double> A , VectorXd v)
 
   vector< SparseVector<double> > z;
   z.resize(v.size());
-  _Vm.resize(m+1);
-  _Vm[0]= v1/v1.norm();
+  Vm.resize(m+1);
+  Vm[0]= v1/v1.norm();
 
   for (int j=0 ; j<m ; j++)
-    {SparseVector<double> Av = A*_Vm[j];
+    {SparseVector<double> Av = A*Vm[j];
       s1.setZero();
         for(int i=0 ; i<j ; i++)
         {
-          _Hm.coeffRef(i,j) = Av.dot(_Vm[i]);
-          s1 +=  _Hm.coeffRef(i,j)*_Vm[i];
+          _Hm.coeffRef(i,j) = Av.dot(Vm[i]);
+          s1 +=  _Hm.coeffRef(i,j)*Vm[i];
         }
       z[j] = Av - s1;
       _Hm.coeffRef(j+1,j) = z[j].norm();
 
     if(_Hm.coeffRef(j+1,j) == 0.)
     {   break;}
-    _Vm[j+1] = z[j]/_Hm.coeffRef(j+1,j);
-    }
+    Vm[j+1] = z[j]/_Hm.coeffRef(j+1,j);
+  }
+
+  for(int i=0; i<m; i++)
+  {
+    for (int j=0; j<m; j++)
+    {_Vm.coeffRef(i,j) = Vm[j].coeffRef(i);}
+  }
   //  cout<<"Hm = "<<_Hm <<endl;
 }
-/*
-const vector< SparseVector<double> > & GetVm() const
+
+
+void Gmres::Givens(SparseMatrix<double> Hm)
+{
+  _Rm = Hm;
+  cout << Hm << endl;
+  _Qm.resize(Hm.rows(), Hm.cols());
+  cout << "QM " << _Qm.rows() << _Qm.cols() << endl;
+  _Qm.setIdentity();
+  double c(0.), s(0.), u(0.), v(0.);
+  SparseMatrix<double> Rotation_transposee(Hm.rows(), Hm.cols());
+
+  for (int i=0; i<Hm.rows()-1; i++)
+  {
+    cout << _Rm << endl;
+    Rotation_transposee.setIdentity();
+    c = _Rm.coeffRef(i,i)/sqrt(_Rm.coeffRef(i,i)*_Rm.coeffRef(i,i) + _Rm.coeffRef(i+1,i)*_Rm.coeffRef(i+1,i));
+    s = -_Rm.coeffRef(i+1,i)/sqrt(_Rm.coeffRef(i,i)*_Rm.coeffRef(i,i) + _Rm.coeffRef(i+1,i)*_Rm.coeffRef(i+1,i));
+    Rotation_transposee.coeffRef(i,i) = c;
+    Rotation_transposee.coeffRef(i+1,i+1) = c;
+    Rotation_transposee.coeffRef(i+1,i) = -s;
+    Rotation_transposee.coeffRef(i,i+1) = s;
+
+    for (int j=i; j<Hm.cols(); j++)
+    {
+      u = _Rm.coeffRef(i,j);
+      v = _Rm.coeffRef(i+1,j);
+      _Rm.coeffRef(i,j) = c*u - s*v;
+      _Rm.coeffRef(i+1,j) = s*u + c*v;
+      //if (j == i)
+      //{cout << "ici " << _Rm.coeffRef(i+1,j) << endl;}
+    }
+
+    _Qm = _Qm*Rotation_transposee;
+  }
+
+}
+
+
+const SparseMatrix<double> & Gmres::GetVm() const
 {
   return _Vm;
 }
 
-const SparseMatrix<double> & GetHm() const
+const SparseMatrix<double> & Gmres::GetHm() const
 {
   return _Hm;
 }
-*/
-/*
+
 void Gmres::Advance(VectorXd z)
 {
-  SparseQR< SparseMatrix<double> > QR;
-  QR.factorize(_Hm);
-  QR.matrixQ()
+  VectorXd gm_barre(_Qm.rows()), gm(z.size()), y(z.size()), vect(_Qm.rows());
+  SparseMatrix<double> Rm_pas_barre(z.size(), z.size());
+  SparseMatrix<double> Vm;
+  Vm.resize(z.size(), z.size());
+
+  gm.setZero();
+  gm_barre.setZero();
+  vect.setZero();
+
+  for (int i=0; i<_Qm.rows(); i++)
+  {
+    gm_barre[i] += _Qm.coeffRef(i,1);
+    vect[i] += _Qm.coeffRef(z.size(), i);
+  }
+
+  gm_barre = gm_barre*z.norm();
+  cout << "coucou" << endl;
+  cout << "size gm " << gm.size() << endl;
+  cout << "size gm_barre" << _Qm.rows() << endl;
+  for (int i=0; i<z.size(); i++)
+  {
+    gm[i] = gm_barre[i];
+  }
+  cout << "coucou" << endl;
+  for (int i=0; i<z.size(); i++)
+  {
+    for (int j=0; j<z.size(); j++)
+    {
+      Rm_pas_barre.coeffRef(i,j) = _Rm.coeffRef(i,j);
+      Vm.coeffRef(i,j) = _Vm.coeffRef(i,j);
+    }
+  }
+  cout << "coucou" << endl;
+  y = GetSolTriangSup(Rm_pas_barre, gm);
+
+  _x = _x + Vm*y;
+
+  _r = gm_barre[z.size()]*_Vm*vect;
+
 
 }
-*/
+
+///////////////////// Fonctions hors classe ///////////////////////
 VectorXd GetSolTriangSup(SparseMatrix<double> U, VectorXd b)
 {
   VectorXd solution(U.rows());

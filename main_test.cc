@@ -8,7 +8,7 @@ int main()
   int userChoiceMeth(0);
   int n_ite_max(200000);
   double eps(0.01);
-  int const N(15);
+  int const N(5);
   double alpha(3);
   string name_file;
 
@@ -45,11 +45,11 @@ BnTBn = Bn.transpose()*Bn;
 for (int i =0 ; i< N; i++)
   {
     for (int j =0 ; j< N; j++)
-      {
-        An.insert(i,j) =alpha*In.coeffRef(i,j) + BnTBn.coeffRef(i,j);
+    {
+      An.insert(i,j) =alpha*In.coeffRef(i,j) + BnTBn.coeffRef(i,j);
+    }
+  }
 
-}
-}
  //cout <<"An = "<<endl<< An <<endl;
 
  //création de b
@@ -72,6 +72,7 @@ for (int i =0 ; i< N; i++)
 
   // on construit le residu minimum
   MethIterative* MethIterate(0);
+  Gmres gmrs;
 
   ofstream mon_flux; // Contruit un objet "ofstream"
 
@@ -174,6 +175,22 @@ for (int i =0 ; i< N; i++)
       break;
 
 
+    case 4:
+      gmrs.MatrixInitialize(An);
+      gmrs.Initialize(x0, b);
+
+      name_file = "sol"+to_string(N)+"_GMRes.txt";
+      mon_flux.open(name_file);
+
+      while(gmrs.GetResidu().norm() > eps && n_ite < n_ite_max)
+      {
+        gmrs.Arnoldi(An, gmrs.GetResidu()); // check le remplissage de la SparseMatrix
+        cout << gmrs.GetHm() << endl;
+        gmrs.Givens(gmrs.GetHm());
+        gmrs.Advance(gmrs.GetResidu());
+        n_ite++;
+      }
+      break;
 
     default:
       cout << "Ce choix n'est pas possible" << endl;
@@ -181,12 +198,9 @@ for (int i =0 ; i< N; i++)
   }
 
 
-
   delete MethIterate;
   MethIterate = 0;
   mon_flux.close();
-
-
 
 
   return 0;
