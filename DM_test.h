@@ -10,8 +10,8 @@
 #include "Dense"
 #include "Sparse"
 #include "Eigen"
-#include "SparseCore"
-#include "SparseQR"
+
+
 class MethIterative
 {
   protected:
@@ -39,8 +39,8 @@ class MethIterative
     const Eigen::VectorXd & GetResidu() const;
     const Eigen::VectorXd & Getp() const;
     void saveSolution(int N , std::string name_file ,  int n_iter , double residu);
-
-
+    Eigen::SparseMatrix<double> create_mat(const std::string name_file_read, bool sym);
+    void  Get_norme_sol();
 };
 
 class ResiduMin : public MethIterative
@@ -60,8 +60,6 @@ class GradientConj : public MethIterative
 class SGS : public MethIterative
 {
   private:
-    Eigen::SparseMatrix<double> _L;
-    Eigen::SparseMatrix<double> _U;
     Eigen::SparseMatrix<double> _M;
     Eigen::VectorXd _y;
   public:
@@ -75,15 +73,10 @@ class Gmres : public MethIterative
     std::vector< Eigen::SparseVector<double> > _Vm ;
     Eigen::SparseMatrix<double> _Hm;
   public:
-    Eigen::SparseMatrix<double> & GetHm() ;
-    std::vector< Eigen::SparseVector<double> > & GetVm() ;
     void Advance(Eigen::VectorXd z);
     void Initialize(Eigen::VectorXd x0, Eigen::VectorXd b);
-    void Arnoldi( Eigen::SparseMatrix<double> A , Eigen::VectorXd v);
+    void Arnoldi(Eigen::VectorXd v);
 };
-
-Eigen::VectorXd GetSolTriangSup(Eigen::SparseMatrix<double> U, Eigen::VectorXd b);
-Eigen::VectorXd GetSolTriangInf(Eigen::SparseMatrix<double> L, Eigen::VectorXd b);
 
 
 

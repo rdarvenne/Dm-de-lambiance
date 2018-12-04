@@ -37,6 +37,8 @@ void ResiduMin::Initialize(VectorXd x0, VectorXd b)
 {
   _x = x0;
   _b = b;
+
+
   _r = _b - _A*_x;
 
   ofstream mon_flux; // Contruit un objet "ofstream"
@@ -90,68 +92,47 @@ void SGS::Initialize(VectorXd x0, VectorXd b)
 
   SparseMatrix<double> U, L, D;
   U.resize(_A.rows(), _A.cols()), L.resize(_A.rows(),_A.cols()), D.resize(_A.rows(),_A.cols());
-  _U.resize(_A.rows(), _A.cols()), _L.resize(_A.rows(), _A.cols());
   U = _A;
   L = _A;
-  _U = _A;
-  _L = _A;
   for (int i=0; i<_A.rows(); i++)
   {
     for (int j=0; j<_A.cols(); j++)
     {
       if (i>j)
-        {U.coeffRef(i,j) = 0.;
-        _U.coeffRef(i,j) = 0.;}
+        U.coeffRef(i,j) = 0.;
       else if (j>i)
-        {L.coeffRef(i,j) = 0.;
-        _L.coeffRef(i,j) = 0.;}
+        L.coeffRef(i,j) = 0.;
+
       else
-        {D.coeffRef(i,i) = 1./_A.coeffRef(i,i);
-        _L.coeffRef(i,i) = 1./_A.coeffRef(i,i);}
+        D.coeffRef(i,i) = 1./_A.coeffRef(i,i);
     }
   }
   _M = L*D*U;
-  _L = L*D;
-  _U = U;
-  // cout << _M << endl;
-  // cout << "--------" << endl;
-  // cout << _L*_U << endl;
-  /*
+
   SparseLU< SparseMatrix<double>> lu1;
 
   lu1.analyzePattern(_M) ;
   lu1.factorize(_M);
   _y = lu1.solve(_b);
 
-  SparseLU< SparseMatrix<double> > lu2;
-  lu2.analyzePattern(_L*_U);
-  lu2.factorize(_L*_U);
-  _y = lu2.solve(_b);
-  */
-  VectorXd y_bis(_x.size());
-  y_bis = GetSolTriangInf(_L, b);
-  _y = GetSolTriangSup(_U, y_bis);
-
 }
 
 void SGS::Advance(VectorXd z)
 {
-  VectorXd  w(_x.size()), w_bis(_x.size());
+  VectorXd  w(_x.size());
 
   // SparseLU< SparseMatrix<double> > lu1;
   // lu1.analyzePattern(_M) ;
   // lu1.factorize(_M);
   // y = lu1.solve(_b);
-  /*
+
   SparseLU< SparseMatrix<double> > lu2;
   lu2.analyzePattern(_M) ;
   lu2.factorize(_M);
   w = lu2.solve(z);
-  */
-  w_bis = GetSolTriangInf(_L, z);
-  w = GetSolTriangSup(_U, w_bis);
-  _r = _b - z;
+
   _x += - w + _y;
+  _r = _b - _A*_x;
 
 }
 
@@ -170,71 +151,56 @@ void MethIterative::saveSolution(int N ,string name_file , int n_iter , double r
   mon_flux.close();
 }
 
+SparseMatrix<double> MethIterative::create_mat(const string name_file_read, bool sym)
+ {
+   int N(0.);
+  // Eigen::SparseMatrix<double> A ;
+   ifstream mon_flux(name_file_read);
 
+   string ligne, colonne, valeur;
+   getline(mon_flux,ligne); //lit la première ligne qui ne nous intéresse pas
 
-vector< SparseVector<double> > & Gmres::GetVm()
-{
-  return _Vm;
+   mon_flux >> N; //lit le premier mot de la ligne 2 correspond au nombre de lignes
+
+   int nonzero_elem;
+   mon_flux >> colonne; //lit le nombre de colonnes (valeur stockée inutilement, je ne savais pas comment lire sans stocker...)
+   mon_flux >> nonzero_elem; //lit le nombre d'élements non nuls
+
+   // Définition de la la matrice A.
+   _A.resize(N,N);
+   vector<Triplet<double>> liste_elem;
+   for (int i = 0; i < nonzero_elem; i++)
+   {
+     mon_flux >> ligne;
+     mon_flux >> colonne;
+     mon_flux >> valeur;
+
+     int li = atoi(ligne.c_str());
+     int col = atoi(colonne.c_str());
+     double val = atof(valeur.c_str());
+
+     liste_elem.push_back({li-1,col-1,val});  //atoi pour passer de string à int et atof idem avec double
+     if ((colonne != ligne) && sym) // dans le cas d'une matrice symétrique seulement la moitié des éléments sont dans le fichier texte
+     {
+       liste_elem.push_back({col-1,li-1,val});
+     }
+   }
+   _A.setFromTriplets(liste_elem.begin(),liste_elem.end());
+   mon_flux.close();
+
+   return _A;
 }
 
-SparseMatrix<double> & Gmres::GetHm()
-{
-  return _Hm;
-}
+void  MethIterative::Get_norme_sol()
+{ VectorXd Xverif(_x.size());
+  for(int i = 0 ; i<_x.size() ; i++)
+    {Xverif[i]=1.-_x[i];}
 
+  cout<<"norme de (Xcalc - Xth)  = "<<Xverif.norm()<<endl;}
 
-void Gmres::Advance(VectorXd z)
-{ SparseMatrix<double> Qm , Rm ;
-  SparseQR< SparseMatrix<double, RowMajor>, COLAMDOrdering<int> > qr;
-  
-  qr.analyzePattern(_Hm);
-  qr.factorize(_Hm);
-  Qm = qr.matrixQ();
-  Rm = qr.matrixR();
+//GMRES
 
-
-
-
-
-
-}
-
-VectorXd GetSolTriangSup(SparseMatrix<double> U, VectorXd b)
-{
-  VectorXd solution(U.rows());
-
-  for (int i=0; i<U.rows(); i++)
-  {
-    solution[U.rows()-i-1] = b[U.rows()-i-1];
-    for (int j=U.rows()-i; j<U.rows(); j++)
-    {
-      solution[U.rows()-1-i] = solution[U.rows()-1-i] - U.coeffRef(U.rows()-1-i,j)*solution[j];
-    }
-    solution[U.rows()-1-i] = solution[U.rows()-1-i]/U.coeffRef(U.rows()-1-i,U.rows()-1-i);
-  }
-  return solution;
-}
-
-VectorXd GetSolTriangInf(SparseMatrix<double> L, VectorXd b)
-{
-  VectorXd solution(L.rows());
-
-  for (int i=0; i<L.rows(); i++)
-  {
-    solution[i] = b[i];
-    for (int j=0; j<i; j++)
-    {
-      solution[i] = solution[i] - L.coeffRef(i,j)*solution(j);
-    }
-    solution[i] = solution[i]/L.coeffRef(i,i);
-  }
-  return solution;
-}
-
-
-///////////GMRES/////////////////////////////
-
-void Gmres::Arnoldi( SparseMatrix<double> A , VectorXd v) //Hm a une ligne de 0 en plus
+void Arnoldi( SparseMatrix<double> A , VectorXd v)
 {
   //dimension de l'espace
   int m = v.size();
@@ -271,15 +237,6 @@ void Gmres::Arnoldi( SparseMatrix<double> A , VectorXd v) //Hm a une ligne de 0 
     }
   //  cout<<"Hm = "<<_Hm <<endl;
 }
-
-void Gmres::Initialize(Eigen::VectorXd x0, Eigen::VectorXd b)
-{}
-
-
-
-
-
-
 
 #define _Meth_Iterative_H
 #endif
