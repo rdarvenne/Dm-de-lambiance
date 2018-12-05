@@ -76,9 +76,11 @@ class Gmres : public MethIterative
     Eigen::SparseMatrix<double> _Hm;
     Eigen::SparseMatrix<double> _Qm;
     Eigen::SparseMatrix<double> _Rm;
+    double _beta;
   public:
     const Eigen::SparseMatrix<double> & GetHm() const;
     const Eigen::SparseMatrix<double> & GetVm() const;
+    const double & GetNorm() const;
     void Advance(Eigen::VectorXd z);
     void Initialize(Eigen::VectorXd x0, Eigen::VectorXd b);
     void Arnoldi(Eigen::SparseMatrix<double> A, Eigen::VectorXd v);

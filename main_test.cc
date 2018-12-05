@@ -8,14 +8,15 @@ int main()
   int userChoiceMeth(0);
   int n_ite_max(200000);
   double eps(0.01);
-  int const N(5);
-  double alpha(3);
+  int const N(24);
+  double alpha(3*N);
   string name_file;
 
   cout << "Veuillez choisir la méthode de résolution pour Ax=b:" << endl;
   cout << "1) Méthode du Résidu Minimum" << endl;
   cout << "2) Méthode du Gradient Conjugué" << endl;
   cout << "3) Méthode SGS" << endl;
+  cout << "4) Méthode GMRes" << endl;
   cin >> userChoiceMeth;
 
 //création d'une matrice de la forme souhaitée
@@ -182,14 +183,26 @@ for (int i =0 ; i< N; i++)
       name_file = "sol"+to_string(N)+"_GMRes.txt";
       mon_flux.open(name_file);
 
-      while(gmrs.GetResidu().norm() > eps && n_ite < n_ite_max)
+      while(gmrs.GetNorm() > eps && n_ite < n_ite_max)
       {
+        // cout << "An = " << An <<endl;
+        // cout << "residu = " <<gmrs.GetResidu()<<endl;
         gmrs.Arnoldi(An, gmrs.GetResidu()); // check le remplissage de la SparseMatrix
-        cout << gmrs.GetHm() << endl;
-        gmrs.Givens(gmrs.GetHm());
+        //cout << "HM " << gmrs.GetHm().rows() << gmrs.GetHm().cols() << endl;
+        gmrs.Givens(gmrs.GetHm()); // attention renvoi Rm et Qm de taille carré
         gmrs.Advance(gmrs.GetResidu());
+
         n_ite++;
       }
+      if (n_ite > n_ite_max)
+        {cout << "Tolérance non atteinte"<<endl;}
+
+      cout <<"  "<<endl;   // d'après doc internet si x0 est trop éloigné de x les résultats ne converge plus
+      cout <<"x avec SGS = "<<endl << gmrs.GetIterateSolution() <<endl;
+      cout <<"    "<<endl;
+      cout << An*gmrs.GetIterateSolution()<<endl;
+      cout <<"    "<<endl;
+      cout << "nb d'itérations pour GMRes = " << n_ite << endl;
       break;
 
     default:

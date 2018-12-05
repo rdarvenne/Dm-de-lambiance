@@ -156,7 +156,7 @@ void Gmres::Initialize(VectorXd x0, VectorXd b)
   _x = x0;
   _b = b;
   _r = _b - _A*_x;
-  _p = _r;                   // utile pour le GradientConj
+  _beta = _r.norm();
 
   ofstream mon_flux; // Contruit un objet "ofstream"
   string name_file = ("/sol_"+to_string(_x.size())+"_grad_conj.txt");  //commande pour modifier le nom de chaque fichier
@@ -169,11 +169,9 @@ void Gmres::Arnoldi( SparseMatrix<double> A , VectorXd v)
   //dimension de l'espace
   int m = v.size();
 
-  _Vm.resize(m+1, m);
+  _Vm.resize(m, m+1);
 
   vector< SparseVector<double> > Vm ;
-  SparseMatrix<double> _Hm;
-
   SparseVector<double> v1 , s1 ;
   s1.resize(v.size());
   v1 = v.sparseView();
@@ -191,12 +189,13 @@ void Gmres::Arnoldi( SparseMatrix<double> A , VectorXd v)
       s1.setZero();
         for(int i=0 ; i<j ; i++)
         {
+
           _Hm.coeffRef(i,j) = Av.dot(Vm[i]);
           s1 +=  _Hm.coeffRef(i,j)*Vm[i];
+
         }
       z[j] = Av - s1;
       _Hm.coeffRef(j+1,j) = z[j].norm();
-
     if(_Hm.coeffRef(j+1,j) == 0.)
     {   break;}
     Vm[j+1] = z[j]/_Hm.coeffRef(j+1,j);
@@ -204,26 +203,27 @@ void Gmres::Arnoldi( SparseMatrix<double> A , VectorXd v)
 
   for(int i=0; i<m; i++)
   {
-    for (int j=0; j<m; j++)
+    for (int j=0; j<m+1; j++)
     {_Vm.coeffRef(i,j) = Vm[j].coeffRef(i);}
   }
-  //  cout<<"Hm = "<<_Hm <<endl;
+
 }
 
 
 void Gmres::Givens(SparseMatrix<double> Hm)
 {
+
+// J'ai mis R et Q de taille carré...
   _Rm = Hm;
-  cout << Hm << endl;
-  _Qm.resize(Hm.rows(), Hm.cols());
-  cout << "QM " << _Qm.rows() << _Qm.cols() << endl;
+  //cout << Hm << endl;
+  _Qm.resize(Hm.rows(), Hm.rows());
+  //cout << "QM " << _Qm.rows() << _Qm.cols() << endl;
   _Qm.setIdentity();
   double c(0.), s(0.), u(0.), v(0.);
-  SparseMatrix<double> Rotation_transposee(Hm.rows(), Hm.cols());
+  SparseMatrix<double> Rotation_transposee(Hm.rows(), Hm.rows());
 
   for (int i=0; i<Hm.rows()-1; i++)
   {
-    cout << _Rm << endl;
     Rotation_transposee.setIdentity();
     c = _Rm.coeffRef(i,i)/sqrt(_Rm.coeffRef(i,i)*_Rm.coeffRef(i,i) + _Rm.coeffRef(i+1,i)*_Rm.coeffRef(i+1,i));
     s = -_Rm.coeffRef(i+1,i)/sqrt(_Rm.coeffRef(i,i)*_Rm.coeffRef(i,i) + _Rm.coeffRef(i+1,i)*_Rm.coeffRef(i+1,i));
@@ -243,8 +243,9 @@ void Gmres::Givens(SparseMatrix<double> Hm)
     }
 
     _Qm = _Qm*Rotation_transposee;
+    //cout << "Rm rows / cols" << _Rm.rows() << " " << _Rm.cols() << endl;
   }
-
+    // cout << "_vm = "<< _Vm << endl;
 }
 
 
@@ -271,36 +272,40 @@ void Gmres::Advance(VectorXd z)
 
   for (int i=0; i<_Qm.rows(); i++)
   {
-    gm_barre[i] += _Qm.coeffRef(i,1);
-    vect[i] += _Qm.coeffRef(z.size(), i);
+    gm_barre[i] = _Qm.coeffRef(0,i);
+    vect[i] = _Qm.coeffRef(i,z.size());
   }
 
-  gm_barre = gm_barre*z.norm();
-  cout << "coucou" << endl;
-  cout << "size gm " << gm.size() << endl;
-  cout << "size gm_barre" << _Qm.rows() << endl;
+  gm_barre = z.norm()*gm_barre;
+
   for (int i=0; i<z.size(); i++)
   {
     gm[i] = gm_barre[i];
-  }
-  cout << "coucou" << endl;
-  for (int i=0; i<z.size(); i++)
-  {
     for (int j=0; j<z.size(); j++)
     {
       Rm_pas_barre.coeffRef(i,j) = _Rm.coeffRef(i,j);
       Vm.coeffRef(i,j) = _Vm.coeffRef(i,j);
     }
   }
-  cout << "coucou" << endl;
+
   y = GetSolTriangSup(Rm_pas_barre, gm);
 
   _x = _x + Vm*y;
 
   _r = gm_barre[z.size()]*_Vm*vect;
-
-
+  _beta = abs(gm_barre[z.size()]);
+    //cout << " r = " << _r << endl;
+    cout << "gm+1 " << gm_barre[_r.size()] << endl;
+    cout <<"norme de r " << _r.norm() << endl;
+  // cout << "juste après l'affectation de r dans advance" << endl;
+  //
+  // cout << "_vm = "<< _Vm << endl;
 }
+const double & Gmres::GetNorm() const
+{
+  return _beta;
+}
+
 
 ///////////////////// Fonctions hors classe ///////////////////////
 VectorXd GetSolTriangSup(SparseMatrix<double> U, VectorXd b)
